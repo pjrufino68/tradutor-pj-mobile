@@ -1,0 +1,52 @@
+name: Gerar APK Android 100% Offline
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependências do sistema
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git zip unzip openjdk-17-jdk autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev
+
+      - name: Instalar Buildozer e Cython
+        run: |
+          pip install --upgrade pip
+          pip install buildozer cython argostranslate
+
+      - name: Baixar pacotes offline no build (garantia caso não estejam commitados)
+        run: |
+          python -c "
+          import argostranslate.package as pkg
+          pkg.update_package_index()
+          avail = pkg.get_available_packages()
+          pares = [('en','pt'), ('pt','en'), ('en','es'), ('es','en'), ('es','pt'), ('pt','es')]
+          for p in avail:
+              if (p.from_code, p.to_code) in pares:
+                  pkg.install_from_path(p.download())
+          print('Modelos offline preparados!')
+          "
+
+      - name: Compilar APK com Buildozer
+        run: |
+          buildozer android debug
+
+      - name: Salvar APK como Artefato para Download
+        uses: actions/upload-artifact@v4
+        with:
+          name: TradutorPJ-Offline-Android-APK
+          path: bin/*.apk
