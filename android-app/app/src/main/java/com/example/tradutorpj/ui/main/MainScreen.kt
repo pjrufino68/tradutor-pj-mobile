@@ -23,6 +23,8 @@ import com.google.mlkit.nl.translate.Translation
 import com.google.mlkit.nl.translate.Translator
 import com.google.mlkit.nl.translate.TranslatorOptions
 
+import androidx.navigation3.runtime.NavKey
+
 data class IdiomaOpcao(val nome: String, val codigo: String)
 
 val IDIOMAS_DISPONIVEIS = listOf(
@@ -37,7 +39,7 @@ val IDIOMAS_DISPONIVEIS = listOf(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
-    onItemClick: (Any) -> Unit = {},
+    onItemClick: (NavKey) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
