@@ -1,4 +1,4 @@
-name: Gerar APK Android 100% Offline
+name: Gerar APK Android 100% Offline (ML Kit)
 
 on:
   push:
@@ -7,46 +7,28 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
 
-      - name: Configurar Python
-        uses: actions/setup-python@v5
+      - name: Configurar Java 17
+        uses: actions/setup-java@v4
         with:
-          python-version: '3.11'
+          distribution: 'temurin'
+          java-version: '17'
 
-      - name: Instalar dependências do sistema
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y git zip unzip openjdk-17-jdk autoconf libtool pkg-config zlib1g-dev libncurses-dev libtinfo6 cmake libffi-dev libssl-dev
+      - name: Dar permissão de execução ao gradlew
+        run: chmod +x ./android-app/gradlew
 
-      - name: Instalar Buildozer e Cython
+      - name: Compilar APK (Assemble Debug)
         run: |
-          pip install --upgrade pip
-          pip install buildozer cython argostranslate
-
-      - name: Baixar pacotes offline no build (garantia caso não estejam commitados)
-        run: |
-          python -c "
-          import argostranslate.package as pkg
-          pkg.update_package_index()
-          avail = pkg.get_available_packages()
-          pares = [('en','pt'), ('pt','en'), ('en','es'), ('es','en'), ('es','pt'), ('pt','es')]
-          for p in avail:
-              if (p.from_code, p.to_code) in pares:
-                  pkg.install_from_path(p.download())
-          print('Modelos offline preparados!')
-          "
-
-      - name: Compilar APK com Buildozer
-        run: |
-          buildozer android debug
+          cd android-app
+          ./gradlew assembleDebug --no-daemon
 
       - name: Salvar APK como Artefato para Download
         uses: actions/upload-artifact@v4
         with:
-          name: TradutorPJ-Offline-Android-APK
-          path: bin/*.apk
+          name: TradutorPJ-Android-APK
+          path: android-app/app/build/outputs/apk/debug/*.apk
